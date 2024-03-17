@@ -90,6 +90,7 @@ public class Launcher
 {
 	static final File RUNELITE_DIR = new File(System.getProperty("user.home"), ".runelite");
 	static final File LOGS_DIR = new File(RUNELITE_DIR, "logs");
+	static final File PATCHED_DIR = new File(RUNELITE_DIR, "patched-files");
 	static final File REPO_DIR = new File(RUNELITE_DIR, "repository2");
 	public static final File CRASH_FILES = new File(LOGS_DIR, "jvm_crash_pid_%p.log");
 	private static final String USER_AGENT = "RuneLite/" + LauncherProperties.getVersion();
@@ -228,9 +229,6 @@ public class Launcher
 				jvmProps.put("apple.awt.application.appearance", "system");
 			}
 
-			// Stream launcher version
-			jvmProps.put(LauncherProperties.getVersionKey(), LauncherProperties.getVersion());
-
 			if (settings.isSkipTlsVerification())
 			{
 				jvmProps.put("runelite.insecure-skip-tls-verification", "true");
@@ -297,13 +295,7 @@ public class Launcher
 				return;
 			}
 
-			if (JagexLauncherCompatibility.check())
-			{
-				// check() opens an error dialog
-				return;
-			}
-
-			if (!REPO_DIR.exists() && !REPO_DIR.mkdirs())
+			if ((!REPO_DIR.exists() && !REPO_DIR.mkdirs()) || (!PATCHED_DIR.exists() && !PATCHED_DIR.mkdirs()))
 			{
 				log.error("unable to create directory {}", REPO_DIR);
 				SwingUtilities.invokeLater(() -> new FatalErrorDialog("Unable to create RuneLite directory " + REPO_DIR.getAbsolutePath() + ". Check your filesystem permissions are correct.").open());
@@ -414,29 +406,8 @@ public class Launcher
 			jvmParams.add("-XX:ErrorFile=" + CRASH_FILES.getAbsolutePath());
 			// Add VM args from cli/env
 			jvmParams.addAll(getJvmArgs(settings));
+			JvmLauncher.launch(bootstrap, PATCHED_DIR.getAbsolutePath(), REPO_DIR.getAbsolutePath(), clientArgs, jvmProps, jvmParams);
 
-			if (settings.launchMode == LaunchMode.REFLECT)
-			{
-				log.debug("Using launch mode: REFLECT");
-				ReflectionLauncher.launch(classpath, clientArgs);
-			}
-			else if (settings.launchMode == LaunchMode.FORK || (settings.launchMode == LaunchMode.AUTO && ForkLauncher.canForkLaunch()))
-			{
-				log.debug("Using launch mode: FORK");
-				ForkLauncher.launch(bootstrap, classpath, clientArgs, jvmProps, jvmParams);
-			}
-			else
-			{
-				if (System.getenv("APPIMAGE") != null)
-				{
-					// java.home is in the appimage, so we can never use the jvm launcher
-					throw new RuntimeException("JVM launcher is not supported from the appimage");
-				}
-
-				// launch mode JVM or AUTO outside of packr
-				log.debug("Using launch mode: JVM");
-				JvmLauncher.launch(bootstrap, classpath, clientArgs, jvmProps, jvmParams);
-			}
 		}
 		catch (Exception e)
 		{

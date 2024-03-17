@@ -71,13 +71,29 @@ class JvmLauncher
 
 	static void launch(
 		Bootstrap bootstrap,
-		List<File> classpath,
+		String repo1,
+		String repo2,
 		Collection<String> clientArgs,
 		Map<String, String> jvmProps,
 		List<String> jvmArgs) throws IOException
 	{
 		StringBuilder classPath = new StringBuilder();
-		for (var f : classpath)
+		File dir1 = new File(repo1);
+		File dir2 = new File(repo2);
+		File[] files1 = dir1.listFiles((d, name) -> name.endsWith(".jar"));
+		File[] files2 = dir2.listFiles((d, name) -> name.endsWith(".jar") && !name.startsWith("runelite-api-1.10"));
+
+		List<File> files = new ArrayList<>();
+		if (files1 != null)
+		{
+			files.addAll(Arrays.asList(files1));
+		}
+		if (files2 != null)
+		{
+			files.addAll(Arrays.asList(files2));
+		}
+
+		for (var f : files)
 		{
 			if (classPath.length() > 0)
 			{
@@ -100,6 +116,7 @@ class JvmLauncher
 
 		List<String> arguments = new ArrayList<>();
 		arguments.add(javaExePath);
+		arguments.add("-ea");
 		arguments.add("-cp");
 		arguments.add(classPath.toString());
 
@@ -115,6 +132,7 @@ class JvmLauncher
 		arguments.addAll(jvmArgs);
 
 		arguments.add(LauncherProperties.getMain());
+		arguments.add("--developer-mode");
 		arguments.addAll(clientArgs);
 
 		logger.info("Running {}", arguments);
