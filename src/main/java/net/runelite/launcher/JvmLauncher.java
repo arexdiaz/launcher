@@ -81,7 +81,17 @@ class JvmLauncher
 		File dir1 = new File(repo1);
 		File dir2 = new File(repo2);
 		File[] files1 = dir1.listFiles((d, name) -> name.endsWith(".jar"));
-		File[] files2 = dir2.listFiles((d, name) -> name.endsWith(".jar") && !name.startsWith("runelite-api-1.10"));
+		File[] files2;
+
+		// If files1 is empty, include all files from dir2
+		if (files1 == null || files1.length == 0)
+		{
+			files2 = dir2.listFiles((d, name) -> name.endsWith(".jar"));
+		}
+		else
+		{
+			files2 = dir2.listFiles((d, name) -> name.endsWith(".jar") && !name.startsWith("runelite-api-1.10"));
+		}
 
 		List<File> files = new ArrayList<>();
 		if (files1 != null)
