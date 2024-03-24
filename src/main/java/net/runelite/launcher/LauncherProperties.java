@@ -40,6 +40,7 @@ public class LauncherProperties
 	private static final String BOOTSTRAP = "runelite.bootstrap";
 	private static final String BOOTSTRAPSIG = "runelite.bootstrapsig";
 	private static final String MAIN = "runelite.main";
+	private static final String PLUGIN_HUB_VER = "runelite.pluginhub.version";
 
 	private static final Properties properties = new Properties();
 
@@ -65,6 +66,11 @@ public class LauncherProperties
 	public static String getVersion()
 	{
 		return properties.getProperty(LAUNCHER_VERSION);
+	}
+
+	public static String getPluginHubVerKey()
+	{
+		return PLUGIN_HUB_VER;
 	}
 
 	public static String getDiscordInvite()

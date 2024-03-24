@@ -84,24 +84,24 @@ class JvmLauncher
 		File[] files2;
 
 		// If files1 is empty, include all files from dir2
-		if (files1 == null || files1.length == 0)
-		{
-			files2 = dir2.listFiles((d, name) -> name.endsWith(".jar"));
-		}
-		else
-		{
-			files2 = dir2.listFiles((d, name) -> name.endsWith(".jar") && !name.startsWith("runelite-api-1.10"));
-		}
+//		if (files1 == null || files1.length == 0)
+//		{
+//			files2 = dir2.listFiles((d, name) -> name.endsWith(".jar"));
+//		}
+//		else
+//		{
+//			files2 = dir2.listFiles((d, name) -> name.endsWith(".jar") && !name.startsWith("runelite-api-1.10"));
+//		}
 
 		List<File> files = new ArrayList<>();
 		if (files1 != null)
 		{
 			files.addAll(Arrays.asList(files1));
 		}
-		if (files2 != null)
-		{
-			files.addAll(Arrays.asList(files2));
-		}
+//		if (files2 != null)
+//		{
+//			files.addAll(Arrays.asList(files2));
+//		}
 
 		for (var f : files)
 		{

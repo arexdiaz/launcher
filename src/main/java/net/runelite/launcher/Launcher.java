@@ -370,6 +370,16 @@ public class Launcher
 			// Clean out old artifacts from the repository
 			clean(artifacts);
 
+			String CLIENT_STRING = artifacts.stream()
+					.map(Artifact::getName)
+					.filter(name -> name.startsWith("client-"))
+					.findFirst()
+					.map(name -> name.substring("client-".length()))
+					.map(name -> name.replace(".jar", ""))
+					.orElse(null);
+
+			jvmProps.put(LauncherProperties.getPluginHubVerKey(), CLIENT_STRING);
+
 			try
 			{
 				download(artifacts, settings.isNodiffs());
