@@ -621,7 +621,7 @@ public class Launcher
 
 		if (!latestVersion.equals(currentVersion))
 		{
-			for(File file: downloadDirectory.listFiles()) 
+			for (File file: downloadDirectory.listFiles())
 			{
 				if (!file.isDirectory()) 
 				{
