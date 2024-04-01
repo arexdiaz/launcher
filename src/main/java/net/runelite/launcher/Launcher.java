@@ -47,10 +47,12 @@ import java.io.OutputStream;
 import java.lang.management.ManagementFactory;
 import java.lang.management.RuntimeMXBean;
 import java.net.URI;
+import java.net.URL;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
 import java.security.Signature;
@@ -71,6 +73,7 @@ import java.util.Objects;
 import java.util.Properties;
 import java.util.Set;
 import java.util.function.IntConsumer;
+import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.zip.GZIPInputStream;
@@ -92,6 +95,8 @@ public class Launcher
 	static final File LOGS_DIR = new File(RUNELITE_DIR, "logs");
 	static final File PATCHED_DIR = new File(RUNELITE_DIR, "patched-files");
 	static final File REPO_DIR = new File(RUNELITE_DIR, "repository2");
+	static final String OWNER = "arexdiaz";
+	static final String GIT_REPO = "runelite";
 	public static final File CRASH_FILES = new File(LOGS_DIR, "jvm_crash_pid_%p.log");
 	private static final String USER_AGENT = "RuneLite/" + LauncherProperties.getVersion();
 	static final String LAUNCHER_EXECUTABLE_NAME_WIN = "RuneLite.exe";
@@ -383,6 +388,7 @@ public class Launcher
 			try
 			{
 				download(artifacts, settings.isNodiffs());
+				downloadClient(OWNER, GIT_REPO, PATCHED_DIR);
 			}
 			catch (IOException ex)
 			{
@@ -416,7 +422,7 @@ public class Launcher
 			jvmParams.add("-XX:ErrorFile=" + CRASH_FILES.getAbsolutePath());
 			// Add VM args from cli/env
 			jvmParams.addAll(getJvmArgs(settings));
-			JvmLauncher.launch(bootstrap, PATCHED_DIR.getAbsolutePath(), REPO_DIR.getAbsolutePath(), clientArgs, jvmProps, jvmParams);
+			JvmLauncher.launch(bootstrap, PATCHED_DIR.getAbsolutePath(), clientArgs, jvmProps, jvmParams);
 
 		}
 		catch (Exception e)
@@ -584,6 +590,48 @@ public class Launcher
 		}
 
 		return args;
+	}
+
+	public static void downloadClient(String owner, String repo, File downloadDirectory) throws IOException, InterruptedException
+	{
+		HttpClient httpClient = HttpClient.newHttpClient();
+		HttpRequest request = HttpRequest.newBuilder()
+				.uri(URI.create("https://api.github.com/repos/" + owner + "/" + repo + "/releases/latest"))
+				.build();
+		HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
+
+		Gson gson = new Gson();
+		Map<String, Object> map = gson.fromJson(response.body(), Map.class);
+
+		Double latestVersionDouble = (Double) map.get("id");
+		String latestVersion = String.format("%.0f", latestVersionDouble).replace(".", "");
+		String downloadUrl = ((List<Map<String, Object>>) map.get("assets")).get(0).get("browser_download_url").toString();
+
+		String currentVersion = null;
+		File[] files = downloadDirectory.listFiles((dir, name) -> name.startsWith("client-"));
+		if (files != null && files.length > 0)
+		{
+			Pattern pattern = Pattern.compile("client-(.*).jar");
+			Matcher matcher = pattern.matcher(files[0].getName());
+			if (matcher.find())
+			{
+				currentVersion = matcher.group(1);
+			}
+		}
+
+		if (!latestVersion.equals(currentVersion))
+		{
+			for(File file: downloadDirectory.listFiles()) 
+			{
+				if (!file.isDirectory()) 
+				{
+					file.delete();
+				}
+			}
+			InputStream in = new URL(downloadUrl).openStream();
+			Files.copy(in, Paths.get(downloadDirectory.getAbsolutePath() + "/client-" + latestVersion + ".jar"));
+			log.info("Client updated to version " + latestVersion);
+		}
 	}
 
 	private static void download(List<Artifact> artifacts, boolean nodiff) throws IOException
