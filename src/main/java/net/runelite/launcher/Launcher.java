@@ -384,6 +384,7 @@ public class Launcher
 					.orElse(null);
 
 			jvmProps.put(LauncherProperties.getPluginHubVerKey(), CLIENT_STRING);
+			jvmProps.put(LauncherProperties.getVersionKey(), LauncherProperties.getVersion());
 
 			try
 			{
